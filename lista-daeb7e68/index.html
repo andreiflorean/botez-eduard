@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Confirmări — botezul lui Eduard</title>
+<style>
+  :root{
+    --paper:#f2eee3; --card:#fdfbf5; --ink:#232c26; --ink-soft:#5c6a5f;
+    --green:#5d7460; --seal:#a8823f; --line:#e0d9c8; --line-soft:#ece6d8;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);font-size:16px;line-height:1.6;
+    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;
+    padding:clamp(14px,4vw,44px) 14px 60px
+  }
+  .panel{
+    max-width:820px;margin:0 auto;background:var(--card);border:1px solid var(--line);
+    border-radius:3px;padding:clamp(22px,5vw,38px)
+  }
+  header{display:flex;flex-wrap:wrap;gap:12px;align-items:baseline;justify-content:space-between}
+  h1{font-family:Georgia,serif;font-weight:400;font-size:clamp(24px,5vw,32px);margin:0}
+  .sub{margin:4px 0 0;color:var(--ink-soft);font-size:14px}
+  .live{
+    display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-soft);
+    text-transform:uppercase;letter-spacing:.16em
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+  .dot.stale{background:#b9793a}
+  .totals{display:flex;flex-wrap:wrap;gap:10px;margin:24px 0}
+  .tot{border:1px solid var(--line);border-radius:2px;padding:13px 17px;background:#fbf8f0;min-width:118px}
+  .tot .n{font-family:Georgia,serif;font-size:29px;line-height:1;font-variant-numeric:tabular-nums}
+  .tot .k{text-transform:uppercase;letter-spacing:.18em;font-size:10px;color:var(--ink-soft);margin-top:6px}
+  .wrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:14.5px}
+  th,td{text-align:left;padding:10px 9px;border-bottom:1px solid var(--line-soft)}
+  th{
+    text-transform:uppercase;letter-spacing:.16em;font-size:10px;color:var(--ink-soft);
+    font-weight:400;border-bottom:1px solid var(--line);white-space:nowrap
+  }
+  td.num{font-variant-numeric:tabular-nums;text-align:center;white-space:nowrap}
+  tbody tr:last-child td{border-bottom:1px solid var(--line)}
+  tfoot td{font-weight:600;color:var(--green);border-bottom:0;padding-top:14px}
+  .msg{padding:22px 0;color:var(--ink-soft);font-size:14.5px}
+  .actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+  button{
+    min-height:44px;padding:0 20px;background:var(--green);color:#fff;border:0;border-radius:2px;
+    font-family:inherit;font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer
+  }
+  button.ghost{background:none;color:var(--ink);border:1px solid var(--line)}
+  button:hover{opacity:.9}
+  .hint{font-size:12.5px;color:var(--ink-soft)}
+  a{color:var(--green)}
+</style>
+</head>
+<body>
+<div class="panel">
+  <header>
+    <div>
+      <h1>Confirmări — botezul lui Eduard</h1>
+      <p class="sub">24 octombrie 2026 · pagină privată, neindexată</p>
+    </div>
+    <span class="live"><span class="dot" id="dot"></span><span id="live-text">se actualizează</span></span>
+  </header>
+
+  <div class="totals">
+    <div class="tot"><div class="n" id="t-adults">—</div><div class="k">adulți</div></div>
+    <div class="tot"><div class="n" id="t-kids">—</div><div class="k">copii</div></div>
+    <div class="tot"><div class="n" id="t-persons">—</div><div class="k">total persoane</div></div>
+    <div class="tot"><div class="n" id="t-entries">—</div><div class="k">confirmări</div></div>
+  </div>
+
+  <div class="wrap">
+    <table>
+      <thead><tr><th>Nume</th><th>Adulți</th><th>Copii</th><th>Total</th><th>Trimis la</th></tr></thead>
+      <tbody id="rows"></tbody>
+      <tfoot id="foot"></tfoot>
+    </table>
+  </div>
+  <p class="msg" id="msg">Se încarcă...</p>
+
+  <div class="actions">
+    <button id="refresh">Reîncarcă</button>
+    <button class="ghost" id="csv">Descarcă CSV</button>
+    <span class="hint" id="stamp"></span>
+  </div>
+</div>
+
+<script>
+(function(){
+  var BUCKET = 'SujWv5Ag8FPocrQLQoUCNZ';
+  var STORE = 'https://kvdb.io/' + BUCKET + '/';
+  var REFRESH = 20000;
+
+  var rowsEl = document.getElementById('rows');
+  var footEl = document.getElementById('foot');
+  var msgEl = document.getElementById('msg');
+  var dotEl = document.getElementById('dot');
+  var liveEl = document.getElementById('live-text');
+  var stampEl = document.getElementById('stamp');
+  var current = [];
+
+  function fmt(iso){
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('ro-RO', {day:'2-digit', month:'short'}) + ' ' +
+           d.toLocaleTimeString('ro-RO', {hour:'2-digit', minute:'2-digit'});
+  }
+
+  /* lista de chei: acceptam mai multe forme de raspuns, ca sa nu depindem de un singur format */
+  function keysFrom(text){
+    var out = [];
+    try{
+      var parsed = JSON.parse(text);
+      if (Array.isArray(parsed)){
+        parsed.forEach(function(item){
+          if (typeof item === 'string') out.push(item);
+          else if (item && typeof item === 'object'){
+            if (typeof item.key === 'string') out.push(item.key);
+            else if (Array.isArray(item) && typeof item[0] === 'string') out.push(item[0]);
+          }
+        });
+        return out;
+      }
+    }catch(e){}
+    text.split(/\r?\n/).forEach(function(line){
+      line = line.trim();
+      if (line.indexOf('rsvp:') === 0) out.push(line);
+    });
+    return out;
+  }
+
+  function load(){
+    liveEl.textContent = 'se încarcă';
+    return fetch(STORE + '?prefix=rsvp:&format=json&limit=1000', {cache:'no-store'})
+      .then(function(r){
+        if (!r.ok) throw new Error('http ' + r.status);
+        return r.text();
+      })
+      .then(function(text){
+        var keys = keysFrom(text);
+        if (!keys.length) return [];
+        return Promise.all(keys.map(function(k){
+          return fetch(STORE + encodeURIComponent(k), {cache:'no-store'})
+            .then(function(r){ return r.ok ? r.text() : null; })
+            .then(function(v){
+              if (!v) return null;
+              try{ return JSON.parse(v); }catch(e){ return null; }
+            })
+            .catch(function(){ return null; });
+        }));
+      })
+      .then(function(list){
+        current = (list || []).filter(Boolean).sort(function(a,b){
+          return (a.at || '') < (b.at || '') ? 1 : -1;
+        });
+        render();
+        dotEl.classList.remove('stale');
+        liveEl.textContent = 'la zi';
+        stampEl.textContent = 'ultima verificare: ' +
+          new Date().toLocaleTimeString('ro-RO', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+      })
+      .catch(function(err){
+        dotEl.classList.add('stale');
+        liveEl.textContent = 'eroare';
+        msgEl.textContent = 'Nu am putut citi lista (' + err.message + ').';
+      });
+  }
+
+  function render(){
+    rowsEl.textContent = '';
+    footEl.textContent = '';
+    if (!current.length){
+      msgEl.textContent = 'Nicio confirmare încă.';
+      ['t-adults','t-kids','t-persons','t-entries'].forEach(function(id){
+        document.getElementById(id).textContent = '0';
+      });
+      return;
+    }
+    msgEl.textContent = '';
+    var adults = 0, kids = 0;
+    current.forEach(function(e){
+      var a = parseInt(e.adults, 10) || 0, k = parseInt(e.kids, 10) || 0;
+      adults += a; kids += k;
+      var tr = document.createElement('tr');
+      [[e.name || '—', ''], [a, 'num'], [k, 'num'], [a + k, 'num'], [fmt(e.at), 'num']]
+        .forEach(function(pair){
+          var td = document.createElement('td');
+          td.textContent = String(pair[0]);
+          if (pair[1]) td.className = pair[1];
+          tr.appendChild(td);
+        });
+      rowsEl.appendChild(tr);
+    });
+    var tr = document.createElement('tr');
+    [['TOTAL',''], [adults,'num'], [kids,'num'], [adults + kids,'num'], ['','']].forEach(function(pair){
+      var td = document.createElement('td');
+      td.textContent = String(pair[0]);
+      if (pair[1]) td.className = pair[1];
+      tr.appendChild(td);
+    });
+    footEl.appendChild(tr);
+    document.getElementById('t-adults').textContent = adults;
+    document.getElementById('t-kids').textContent = kids;
+    document.getElementById('t-persons').textContent = adults + kids;
+    document.getElementById('t-entries').textContent = current.length;
+  }
+
+  document.getElementById('refresh').addEventListener('click', load);
+  document.getElementById('csv').addEventListener('click', function(){
+    if (!current.length) return;
+    var esc = function(v){
+      var s = String(v == null ? '' : v);
+      return /[",;\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    };
+    var lines = ['Nume,Adulți,Copii,Total,Trimis la'];
+    current.forEach(function(e){
+      var a = parseInt(e.adults, 10) || 0, k = parseInt(e.kids, 10) || 0;
+      lines.push([e.name, a, k, a + k, e.at || ''].map(esc).join(','));
+    });
+    var blob = new Blob(['﻿' + lines.join('\r\n') + '\r\n'], {type:'text/csv;charset=utf-8'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'Confirmari-botez-Eduard-' + new Date().toISOString().slice(0,10) + '.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+  });
+
+  load();
+  setInterval(load, REFRESH);
+  document.addEventListener('visibilitychange', function(){
+    if (!document.hidden) load();
+  });
+})();
+</script>
+</body>
+</html>

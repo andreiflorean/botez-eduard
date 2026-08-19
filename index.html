@@ -366,11 +366,9 @@
 
 <script>
 (function(){
-  /* ============================================================
-     Adresa scriptului Google care scrie in foaia de calcul.
-     Se completeaza o singura data, dupa pasii din CONFIRMARI-setup.md
-     ============================================================ */
-  var ENDPOINT = '';
+  /* Depozitul in care ajung confirmarile (kvdb.io, creat pentru aceasta invitatie) */
+  var BUCKET = 'SujWv5Ag8FPocrQLQoUCNZ';
+  var STORE = 'https://kvdb.io/' + BUCKET + '/';
 
   /* ---------------- numaratoare inversa ---------------- */
   (function(){
@@ -413,23 +411,15 @@
   }
 
   function send(entry){
-    var body = JSON.stringify(entry);
-    /* text/plain => cerere simpla, fara preflight; Apps Script raspunde cu antetele CORS */
-    return fetch(ENDPOINT, {
+    /* fiecare confirmare merge intr-o cheie proprie: nu exista concurenta intre invitati */
+    var key = 'rsvp:' + Date.now() + ':' + Math.random().toString(36).slice(2, 8);
+    return fetch(STORE + key, {
       method: 'POST',
       headers: {'Content-Type': 'text/plain;charset=utf-8'},
-      body: body
+      body: JSON.stringify(entry)
     }).then(function(res){
       if (!res.ok) throw new Error('http ' + res.status);
       return true;
-    }).catch(function(){
-      /* a doua cale: trimitem fara sa citim raspunsul (unele browsere blocheaza citirea) */
-      return fetch(ENDPOINT, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: {'Content-Type': 'text/plain;charset=utf-8'},
-        body: body
-      }).then(function(){ return true; });
     });
   }
 
@@ -451,11 +441,6 @@
       form.elements.adults.focus();
       return;
     }
-    if (!ENDPOINT){
-      say('Confirmările se activează în scurt timp. Te rugăm să revii puțin mai târziu.');
-      return;
-    }
-
     submitBtn.disabled = true;
     submitBtn.textContent = 'Se trimite...';
 
