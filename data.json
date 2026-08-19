@@ -1,7 +1,16 @@
 {
- "actualizat": "2026-08-19T21:33:39Z",
- "total_adulti": 0,
- "total_copii": 0,
- "total_persoane": 0,
- "confirmari": []
+ "actualizat": "2026-08-19T21:34:22Z",
+ "total_adulti": 2,
+ "total_copii": 2,
+ "total_persoane": 4,
+ "confirmari": [
+  {
+   "id": "4bba7837-ae89-4cf9-bcb6-85cb0871897c",
+   "nume": "Familia Ionescu",
+   "adulti": 2,
+   "copii": 2,
+   "total": 4,
+   "trimis": "2026-08-19T21:34:13.000Z"
+  }
+ ]
 }
