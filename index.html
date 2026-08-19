@@ -366,9 +366,8 @@
 
 <script>
 (function(){
-  /* Depozitul in care ajung confirmarile (kvdb.io, creat pentru aceasta invitatie) */
-  var BUCKET = 'SujWv5Ag8FPocrQLQoUCNZ';
-  var STORE = 'https://kvdb.io/' + BUCKET + '/';
+  /* Adresa unde ajung confirmarile; de aici sunt preluate automat in tabel */
+  var INBOX = 'https://webhook.site/3bde53e0-d039-4295-a156-3149658870a3';
 
   /* ---------------- numaratoare inversa ---------------- */
   (function(){
@@ -411,15 +410,12 @@
   }
 
   function send(entry){
-    /* fiecare confirmare merge intr-o cheie proprie: nu exista concurenta intre invitati */
-    var key = 'rsvp:' + Date.now() + ':' + Math.random().toString(36).slice(2, 8);
-    return fetch(STORE + key, {
+    /* mode no-cors: cererea pleaca, raspunsul nu e citit — nu avem nevoie de el */
+    return fetch(INBOX, {
       method: 'POST',
+      mode: 'no-cors',
       headers: {'Content-Type': 'text/plain;charset=utf-8'},
       body: JSON.stringify(entry)
-    }).then(function(res){
-      if (!res.ok) throw new Error('http ' + res.status);
-      return true;
     });
   }
 
