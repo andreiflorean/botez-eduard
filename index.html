@@ -58,6 +58,7 @@
   .d1{animation-delay:.05s} .d2{animation-delay:.20s} .d3{animation-delay:.35s} .d4{animation-delay:.50s}
   @keyframes up{to{opacity:1;transform:none}}
   @media (prefers-reduced-motion:reduce){ .reveal{animation:none;opacity:1;transform:none} }
+  @media (prefers-reduced-motion:no-preference){ html{scroll-behavior:smooth} }
 
   .photo{
     position:relative;margin:0 0 -34px;
@@ -121,7 +122,7 @@
   .todo{color:var(--todo);border-bottom:1px dotted var(--todo)}
 
   .program{text-align:left;margin:0 0 clamp(24px,5vw,32px)}
-  .program h2,.cal h2{
+  .program h2,.cal h2,.rsvp h2{
     font-family:Georgia,serif;font-style:italic;font-weight:400;font-size:19px;
     margin:0 0 14px;text-align:center
   }
@@ -163,6 +164,32 @@
     outline:2px solid var(--seal);outline-offset:3px
   }
   .note{margin:12px 0 0;font-size:12.5px;color:var(--ink-soft);max-width:36ch;margin-left:auto;margin-right:auto}
+
+  /* ---------- confirmare prezenta ---------- */
+  .rsvp{
+    margin:clamp(26px,5vw,34px) 0 0;padding-top:clamp(22px,5vw,28px);
+    border-top:1px solid var(--line)
+  }
+  .rsvp .deadline{
+    text-align:center;font-size:14.5px;color:var(--ink-soft);
+    margin:0 auto 18px;max-width:40ch
+  }
+  .rsvp .deadline b{color:var(--ink);font-weight:500}
+  .calls{display:grid;gap:10px}
+  @media (min-width:520px){ .calls{grid-template-columns:1fr 1fr} }
+  .call{
+    display:flex;align-items:center;justify-content:center;gap:12px;
+    min-height:56px;padding:10px 16px;text-decoration:none;color:var(--ink);
+    background:#fbf8f0;border:1px solid var(--line);border-radius:2px;
+    transition:background .2s ease,border-color .2s ease
+  }
+  .call:hover{background:#f6f2e8;border-color:var(--seal)}
+  .call svg{flex:none;color:var(--green-deep)}
+  .call .who{
+    display:block;text-transform:uppercase;letter-spacing:.2em;
+    font-size:10.5px;color:var(--ink-soft);margin:0 0 2px
+  }
+  .call .num{display:block;font-size:16.5px;letter-spacing:.03em}
 
   .sig{
     font-family:Georgia,serif;font-style:italic;font-size:17px;color:var(--ink);
@@ -221,7 +248,7 @@
         <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3" fill="none" stroke="#a8823f" stroke-width="1.1"/></svg>
         <span></span>
       </div>
-      <p class="quote">Un nume mic, o bucurie mare — și o zi pe care ne dorim să o ținem minte împreună cu voi.</p>
+      <p class="quote">Un băiețel mic, o bucurie mare — și o zi pe care ne dorim să o ținem minte împreună cu voi.</p>
       <p class="intro">
         <b>Andrei și Bianca</b> vă invită la botezul fiului lor,<br>
         într-o zi de toamnă pe care o vrem plină de oameni dragi.
@@ -288,6 +315,22 @@
         </a>
       </div>
 
+      <div class="rsvp" id="rsvp">
+        <h2>Confirmă prezența</h2>
+        <p class="deadline">Ne-ar ajuta mult să știm dacă veniți. Sună-ne sau scrie-ne un mesaj până la <b>1 octombrie 2026</b>.</p>
+
+        <div class="calls">
+          <a class="call" href="tel:+40743944284">
+            <svg width="19" height="19" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M6.4 3.3 8 6.1a1 1 0 0 1-.2 1.2L6.5 8.5a10 10 0 0 0 5 5l1.2-1.3a1 1 0 0 1 1.2-.2l2.8 1.6a1 1 0 0 1 .4 1.3l-.8 1.6a1.8 1.8 0 0 1-1.9.9C9.1 16.7 3.3 10.9 2.3 4.6a1.8 1.8 0 0 1 .9-1.9l1.6-.8a1 1 0 0 1 1.3.4Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+            <span><span class="who">Andrei</span><span class="num">0743 944 284</span></span>
+          </a>
+          <a class="call" href="tel:+40746015720">
+            <svg width="19" height="19" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M6.4 3.3 8 6.1a1 1 0 0 1-.2 1.2L6.5 8.5a10 10 0 0 0 5 5l1.2-1.3a1 1 0 0 1 1.2-.2l2.8 1.6a1 1 0 0 1 .4 1.3l-.8 1.6a1.8 1.8 0 0 1-1.9.9C9.1 16.7 3.3 10.9 2.3 4.6a1.8 1.8 0 0 1 .9-1.9l1.6-.8a1 1 0 0 1 1.3.4Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+            <span><span class="who">Bianca</span><span class="num">0746 015 720</span></span>
+          </a>
+        </div>
+      </div>
+
       <p class="sig">Cu drag, Andrei și Bianca</p>
     </div>
 
@@ -297,6 +340,7 @@
 <div class="sticky" id="sticky">
   <a class="btn" id="btn-cal-sticky" target="_blank" rel="noopener"
      href="https://calendar.google.com/calendar/render?action=TEMPLATE&amp;text=Botezul%20lui%20Eduard&amp;dates=20261024T090000Z/20261024T180000Z&amp;details=Slujba%20de%20botez%3A%20ora%2012%3A00%2C%20Biserica%20%E2%80%9E%C3%8En%C4%83l%C8%9Barea%20Sfintei%20Cruci%E2%80%9D%2C%20Strada%20Plopilor%2046.%20Petrecerea%3A%2014%3A00%E2%80%9321%3A00%20la%20Hugs%20%26%20Mugs%20Bistro%2C%20Str.%20M%C4%83ce%C8%99ului%20nr.%202%2C%20Cluj-Napoca.%20V%C4%83%20a%C8%99tept%C4%83m%20cu%20drag%20%E2%80%94%20Andrei%20%C8%99i%20Bianca.&amp;location=Biserica%20%E2%80%9E%C3%8En%C4%83l%C8%9Barea%20Sfintei%20Cruci%E2%80%9D%2C%20Strada%20Plopilor%2046%2C%20400394%20Cluj-Napoca">Adaugă în calendar</a>
+  <a class="btn ghost" href="#rsvp">Confirmă prezența</a>
 </div>
 
 <script>
