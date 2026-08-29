@@ -1,0 +1,63 @@
+name: Curățenie după botez
+
+# Invitația trebuie să rămână online toată ziua de 26 octombrie 2026.
+# Începând cu 27 octombrie, repo-ul se șterge singur — cu tot cu acest workflow.
+
+on:
+  schedule:
+    - cron: "17 7 * * *"   # zilnic, 07:17 UTC (10:17 la Cluj vara, 09:17 iarna)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: curatenie
+  cancel-in-progress: false
+
+jobs:
+  curatenie:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # GitHub dezactivează workflow-urile programate după 60 de zile fără
+      # activitate în repo. Până pe 27 octombrie sunt 59 de zile, adică exact
+      # la limită — de aceea împingem un commit gol de două ori pe lună.
+      - name: Ține programarea în viață
+        run: |
+          set -euo pipefail
+          day=$(date -u +%d)
+          if [ "$day" != "01" ] && [ "$day" != "15" ]; then
+            echo "Nu e zi de heartbeat ($day); trec mai departe."
+            exit 0
+          fi
+          date -u +"%Y-%m-%dT%H:%M:%SZ" > .github/keepalive
+          if [ -z "$(git status --porcelain .github/keepalive)" ]; then
+            echo "Nimic de comis."
+            exit 0
+          fi
+          git config user.name "curatenie-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add .github/keepalive
+          git commit -m "Heartbeat: menține activ jobul de curățenie"
+          git push
+
+      - name: Șterge repo-ul după 26 octombrie 2026
+        env:
+          GH_TOKEN: ${{ secrets.CLEANUP_TOKEN }}
+        run: |
+          set -euo pipefail
+          acum=$(date -u +%s)
+          termen=$(date -u -d "2026-10-27T00:00:00Z" +%s)
+          if [ "$acum" -lt "$termen" ]; then
+            ramase=$(( (termen - acum) / 86400 ))
+            echo "Invitația rămâne online încă $ramase zile."
+            exit 0
+          fi
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::error::A trecut termenul, dar secretul CLEANUP_TOKEN lipsește — repo-ul NU a fost șters."
+            exit 1
+          fi
+          echo "Termen depășit. Șterg ${{ github.repository }}."
+          gh api -X DELETE "repos/${{ github.repository }}"
